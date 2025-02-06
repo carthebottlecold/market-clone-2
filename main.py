@@ -2,26 +2,43 @@ from fastapi import FastAPI,UploadFile,Form,Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
+from fastapi_login import LoginManager
 from typing import Annotated
 import sqlite3
-from fastapi.middleware.cors import CORSMiddleware
 
 con = sqlite3.connect('db.db',check_same_thread=False)
 cur = con.cursor()
 
-cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS items (
-                id INTEGER PRIMARY KEY,
-                title TEXT NOT NULL,
-                image BLOB,
-                price INTEGER NOT NULL,
-                description TEXT,
-                place TEXT NOT NULL,
-                insertAt INTEGER NOT NULL
-            );
-            """)
-
 app = FastAPI()
+
+SERCRET = "super-coding"
+manager =LoginManager(SERCRET,'/login')
+
+@manager.user_loader()
+def query_user(id):
+    user = cur.execute(f"""
+                       SELECT * from users WHERE id='{id}'
+                        """).fetchone()
+    return user
+
+@app.post('/login')
+def login(id:Annotated[str,Form()],
+          password:Annotated[str,Form()]):
+    user =  query_user(id)
+    print(user)
+    return '200'
+
+@app.post('/signup')
+def signup(id:Annotated[str,Form()],
+            password:Annotated[str,Form()],
+            name:Annotated[str,Form()],
+            email:Annotated[str,Form()]):
+    cur.execute(f"""
+              INSERT INTO users(id,name,email,password)
+              VALUES('{id}','{name}','{email}','{password}')
+              """)
+    con.commit()
+    return'200'
 
 @app.post('/items')
 async def create_item(image:UploadFile, 
@@ -31,7 +48,7 @@ async def create_item(image:UploadFile,
                 place:Annotated[str,Form()],
                 insertAt:Annotated[int,Form()]
                 ):
-  
+
   image_bytes = await image.read()
   cur.execute(f"""
                 INSERT INTO 
@@ -48,8 +65,8 @@ async def get_items():
   cur = con.cursor()
   rows = cur.execute(f"""
                      SELECT * from items;
-                     """).fetchall()
-  
+                      """).fetchall()
+
   return JSONResponse(jsonable_encoder(dict(row) for row in rows))
 
 @app.get('/images/{item_id}')
@@ -64,9 +81,9 @@ async def get_image(item_id):
 
 @app.post('/signup')
 def signup(id:Annotated[str,Form()],
-           password:Annotated[str,Form()],
-           name:Annotated[str,Form()],
-           email:Annotated[str,Form()]):
+            password:Annotated[str,Form()],
+            name:Annotated[str,Form()],
+            email:Annotated[str,Form()]):
   cur.execute(f"""
               INSERT INTO users(id,name,email,password)
               VALUES('{id}','{name}','{email}','{password}')
