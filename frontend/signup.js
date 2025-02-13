@@ -20,7 +20,7 @@ const handleSubmit = async (event) => {
 
   if (checkPassword()) {
     const res = await fetch("/signup", {
-      method: "POST",
+      method: "post",
       body: formData,
     });
     const data = await res.json();
