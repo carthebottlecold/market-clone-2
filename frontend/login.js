@@ -1,6 +1,6 @@
 const form = document.querySelector("#login-form");
 
-let accessToken = null;
+let accessToken = "";
 
 const handleSubmit = async (event) => {
   event.preventDefault();
@@ -14,6 +14,7 @@ const handleSubmit = async (event) => {
   });
   const data = await res.json();
   accessToken = data.access_token;
+  console.log(accessToken);
 
   const infoDiv = document.querySelector("#info");
   infoDiv.innerText = "로그인 되었습니다!!";
@@ -21,13 +22,29 @@ const handleSubmit = async (event) => {
   const btn = document.createElement("button");
   btn.innerText = "상품 가져오기!";
   btn.addEventListener("click", async () => {
-    const res = await fetch("/items", {
-      headers: {
-        Authorlization: "Bearer ${accessToken}",
-      },
-    });
-    const data = await res.json();
-    console.log(data);
+    try {
+      console.log("1. 사용되는 토큰:", accessToken);
+      console.log("2. Authorization 헤더:", `Bearer ${accessToken}`);
+
+      const res = await fetch("/items", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("3. 응답 상태:", res.status);
+      const responseData = await res.json();
+      if (!res.ok) {
+        console.log("4. 에러 응답:", responseData);
+      }
+
+      console.log("5. 성공 응답:", data);
+    } catch (error) {
+      console.error("6. 에러 발생:", error);
+    }
   });
   infoDiv.appendChild(btn);
 };
