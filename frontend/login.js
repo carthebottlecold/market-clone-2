@@ -41,7 +41,7 @@ const handleSubmit = async (event) => {
         console.log("4. 에러 응답:", responseData);
       }
 
-      console.log("5. 성공 응답:", data);
+      console.log("5. 성공 응답:", responseData);
     } catch (error) {
       console.error("6. 에러 발생:", error);
     }

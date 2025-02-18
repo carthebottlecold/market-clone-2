@@ -13,21 +13,25 @@ cur = con.cursor()
 
 app = FastAPI()
 
-SERCRET = "super-coding"
-manager = LoginManager(SERCRET,'/login')
+SECRET = "super-coding"
+manager = LoginManager(SECRET,'/login')
+manager.token_location = ["headers"]
+manager.header_name = "Authorization"
+manager.header_type = "Bearer"
 
 @manager.user_loader()
 def query_user(data):
-    WHERE_STATEMENTS = f'id="{data}"'
-    if type(data) == dict:
-        WHERE_STATEMENTS = f'''id="{data['id']}"'''
+  print(data)
+  WHERE_STATEMENTS = f'id="{data}"'
+  if type(data) == dict:
+      WHERE_STATEMENTS = f'''id="{data['id']}"'''
       
-    con.row_factory = sqlite3.Row 
-    cur = con.cursor()
-    user = cur.execute(f"""
-                       SELECT * from users WHERE {WHERE_STATEMENTS}
-                        """).fetchone()
-    return user
+  con.row_factory = sqlite3.Row 
+  cur = con.cursor()
+  user = cur.execute(f"""
+                    SELECT * from users WHERE {WHERE_STATEMENTS}
+                    """).fetchone()
+  return user
 
 @app.post('/login')
 def login(id:Annotated[str,Form()],
@@ -38,13 +42,14 @@ def login(id:Annotated[str,Form()],
     elif password != user['password']:
       raise InvalidCredentialsException
       
-    access_token = manager.create_access_token(data={
-      'sub': {
-        'id':user ['id'],
-        'name' :user['name'],
-        'email':user['email']
-      }
-    })
+    # access_token = manager.create_access_token(data={
+    #   'sub': {
+    #     'id':user['id'],
+    #     'name':user['name'],
+    #     'email':user['email']
+    #   }
+    # })
+    access_token = manager.create_access_token(data={'sub': id})  
       
     return {'access_token':access_token}
 
@@ -80,6 +85,7 @@ async def create_item(image:UploadFile,
 
 @app.get('/items')
 async def get_items(user=Depends(manager)):
+  print (user)
   #컬럼명도 같이 가져옴
   con.row_factory = sqlite3.Row
   cur = con.cursor()
