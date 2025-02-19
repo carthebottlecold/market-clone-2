@@ -15,13 +15,10 @@ app = FastAPI()
 
 SECRET = "super-coding"
 manager = LoginManager(SECRET,'/login')
-manager.token_location = ["headers"]
-manager.header_name = "Authorization"
-manager.header_type = "Bearer"
+
 
 @manager.user_loader()
 def query_user(data):
-  print(data)
   WHERE_STATEMENTS = f'id="{data}"'
   if type(data) == dict:
       WHERE_STATEMENTS = f'''id="{data['id']}"'''
@@ -44,9 +41,9 @@ def login(id:Annotated[str,Form()],
       
     # access_token = manager.create_access_token(data={
     #   'sub': {
-    #     'id':user['id'],
-    #     'name':user['name'],
-    #     'email':user['email']
+    #     'id':["id"],
+    #     'name':["name"],
+    #     'email':["email"]
     #   }
     # })
     access_token = manager.create_access_token(data={'sub': id})  
@@ -71,7 +68,8 @@ async def create_item(image:UploadFile,
                 price:Annotated[int,Form()], 
                 description: Annotated[str,Form()], 
                 place:Annotated[str,Form()],
-                insertAt:Annotated[int,Form()]
+                insertAt:Annotated[int,Form()],
+                user=Depends(manager)
                 ):
 
   image_bytes = await image.read()
